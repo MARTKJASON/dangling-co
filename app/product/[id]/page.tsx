@@ -1,13 +1,13 @@
 'use client';
 
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ArrowLeft, MessageCircle, Sparkles, Check, ChevronLeft, ChevronRight, Star, Loader } from 'lucide-react';
-import { products } from '@/app/lib/products';
 import CustomerFeedbackCarousel from '@/app/components/CustomerFeedback';
 import { useRouter } from 'next/navigation';
 import ChatWidget from '@/app/components/ChatWidget';
+import { useProducts } from '@/app/hooks/useProducts';
 
 
 const MESSENGER_LINK = 'https://www.messenger.com/t/696684716864112';
@@ -43,9 +43,32 @@ const ProductDetailsPage: FC = () => {
     const chatParams = useSearchParams();
   const token = chatParams.get('token') as string;
   const params = useParams();
-  const productId = Number(params.id);
+  const productId = params.id as string;
   const [isMessageSent, setIsMessageSent] = useState(false);
+  const [product, setProduct] = useState<any>(null);
+  const [categoryColor, setCategoryColor] = useState<any>(null);
+  const [categoryEmoji, setCategoryEmoji] = useState<string>('✨');
+  
   const router = useRouter();
+  const { products, loading, error, loadProducts } = useProducts();
+
+  // Load products on mount
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  // Find product by ID from loaded products
+  useEffect(() => {
+    if (products.length > 0) {
+      const foundProduct = products.find((p) => p.id === productId);
+      if (foundProduct) {
+        setProduct(foundProduct);
+        setCategoryColor(categoryColors[foundProduct.category] || categoryColors.necklace);
+        setCategoryEmoji(categoryEmojis[foundProduct.category] || '✨');
+      }
+    }
+  }, [products, productId]);
+
   const handleMessageOrder = (
     productName: string,
     productPrice: string,
@@ -78,21 +101,49 @@ Could you please provide more details about customization options and delivery t
     setTimeout(() => setIsMessageSent(false), 2000);
   };
 
-  let product = null;
-  let categoryColor = null;
-  let categoryEmoji = null;
-
-  for (const category of Object.keys(products)) {
-    const found = (products as any)[category].find((p: any) => p.id === productId);
-    if (found) {
-      product = found;
-      categoryColor = categoryColors[category] || categoryColors.necklace;
-      categoryEmoji = categoryEmojis[category] || '✨';
-      break;
-    }
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] to-[#f5e4c0] flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="text-6xl mb-4 animate-bounce">✨</div>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            Loading your bead...
+          </h1>
+          <p className="text-gray-600 max-w-md">
+            Getting the details ready for you!
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  if (!product) {
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] to-[#f5e4c0] flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            Oops! Something went wrong
+          </h1>
+          <p className="text-gray-600 mb-8 max-w-md">
+            {error}
+          </p>
+          <button
+            onClick={() => router.push('/store')}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Collection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (loading === false && !product) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] to-[#f5e4c0] flex items-center justify-center">
         <div className="text-center px-4">
@@ -114,7 +165,6 @@ Could you please provide more details about customization options and delivery t
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] via-[#f5e4c0] to-[#f0d9b5]">
@@ -143,7 +193,7 @@ Could you please provide more details about customization options and delivery t
               <div className="relative w-full bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-white">
                 <div className="aspect-square overflow-hidden">
                   <img
-                    src={product.image}
+                    src={product.image_url}
                     alt={product.name}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                   />
@@ -173,7 +223,7 @@ Could you please provide more details about customization options and delivery t
             <div className="py-6 px-6 md:px-8 bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl border-2 border-amber-200">
               <p className="text-sm font-semibold text-gray-600 mb-2">Price</p>
               <p className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                {product.price}
+               ₱ {product.price}
               </p>
             </div>
 

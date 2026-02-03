@@ -4,23 +4,31 @@ import React, { useState, FC, useRef, useEffect } from 'react';
 import { Sparkles, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import CategoryTabs, { Category } from '../components/CategoryTabs';
 import ProductCard from '../components/ProductCard';
-import { products } from '../lib/products';
 import { useRouter } from 'next/navigation';
+import { useProducts } from '../hooks/useProducts';
 
 interface StorePageProps {
   onCustomizeClick: () => void;
 }
 
 const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
-  const categories: Category[] = ['keychain','necklace', 'bracelet',  'anklet', 'magnet'];
+  const categories: Category[] = ['keychain', 'necklace', 'bracelet', 'anklet', 'magnet'];
   const [activeCategory, setActiveCategory] = useState<Category>('keychain');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   
+  // Load products from Supabase
+  const { products, loading, error, loadProducts } = useProducts();
+  
   // Swipe detection refs
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+
+  // Load products on component mount
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   // Hide swipe hint after first interaction
   useEffect(() => {
@@ -72,10 +80,15 @@ const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
     router.push('/customize');
   };
 
-  // Filter products based on search
-  const filteredProducts = products[activeCategory].filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter products based on active category and search query
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = product.category === activeCategory;
+    const matchesSearch = searchQuery.toLowerCase() === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-purple-50 to-pink-50 ">
@@ -175,14 +188,46 @@ const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
             } rounded-full`} />
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-16 md:py-20">
+              <div className="text-5xl mb-4 animate-bounce">✨</div>
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">
+                Loading beads...
+              </h3>
+              <p className="text-gray-600 text-center max-w-sm">
+                Getting our collection ready for you
+              </p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex flex-col items-center justify-center py-16 md:py-20">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">
+                Something went wrong
+              </h3>
+              <p className="text-gray-600 text-center max-w-sm mb-4">
+                {error}
+              </p>
+              <button
+                onClick={() => loadProducts()}
+                className="px-4 py-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
           {/* Products Grid */}
-          {filteredProducts.length > 0 ? (
+          {!loading && !error && filteredProducts.length > 0 ? (
             <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 transition-all duration-300 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : (
+          ) : !loading && !error && (
             <div className="flex flex-col items-center justify-center py-16 md:py-20">
               <div className="text-5xl mb-4">🔍</div>
               <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">

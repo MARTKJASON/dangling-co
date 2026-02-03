@@ -4,10 +4,10 @@ import { Sparkles, ArrowRight } from 'lucide-react';
 
 // Type Definitions
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: string;
-  image: string;
+  image_url: string;
 }
 
 interface ProductsByCategory {
@@ -16,11 +16,12 @@ interface ProductsByCategory {
 
 interface ProductCardProps {
   product: Product;
+   onClick?: () => void;
 }
 
 // Color schemes for different price ranges (visual interest)
 const getPriceColor = (price: string): string => {
-  const numPrice = parseInt(price.replace(/[^0-9]/g, ''));
+  const numPrice = parseInt(price);
   
   if (numPrice < 30) return 'from-blue-400 to-cyan-400';
   if (numPrice < 60) return 'from-purple-400 to-pink-400';
@@ -45,7 +46,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
           
           {/* Main Image */}
           <img
-            src={product.image}
+            src={product.image_url}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
           />
@@ -77,7 +78,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
             {/* Price with Gradient */}
             <div className="flex-1">
               <p className={`text-base md:text-lg font-black bg-gradient-to-r ${priceGradient} bg-clip-text text-transparent`}>
-                {product.price}
+               ₱ {product.price}
               </p>
             </div>
 

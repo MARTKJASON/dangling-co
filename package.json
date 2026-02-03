@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.93.0",
+    "firebase": "^12.8.0",
+    "firebase-admin": "^13.6.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "nodemailer": "^7.0.12",
@@ -17,7 +20,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.30",
     "@types/nodemailer": "^7.0.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
