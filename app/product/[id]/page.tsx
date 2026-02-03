@@ -296,14 +296,14 @@ Could you please provide more details about customization options and delivery t
                 </div>
               ))}
             </div>
-                      {product && (
+                      {/* {product && (
         <ChatWidget
           productName={product.name}
           productPrice={product.price}
           productImage={product.image}
         />
         
-      )}
+      )} */}
 
           </div>
 
