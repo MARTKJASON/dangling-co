@@ -82,7 +82,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 onBlur={() => setFocusedField(null)}
                 placeholder="e.g., Colorful Beaded Keychain"
                 maxLength={100}
-                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none ${
+                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none text-black ${
                   focusedField === 'name'
                     ? 'border-purple-500 ring-4 ring-purple-200 shadow-md'
                     : 'border-purple-200 hover:border-purple-300'
@@ -105,7 +105,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 placeholder="Describe your product in detail..."
                 rows={4}
                 maxLength={500}
-                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none resize-none ${
+                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none resize-none text-black ${
                   focusedField === 'description'
                     ? 'border-purple-500 ring-4 ring-purple-200 shadow-md'
                     : 'border-purple-200 hover:border-purple-300'
@@ -125,7 +125,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 onChange={onInputChange}
                 onFocus={() => setFocusedField('category')}
                 onBlur={() => setFocusedField(null)}
-                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none appearance-none cursor-pointer ${
+                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none appearance-none cursor-pointer text-black ${
                   focusedField === 'category'
                     ? 'border-purple-500 ring-4 ring-purple-200 shadow-md'
                     : 'border-purple-200 hover:border-purple-300'
@@ -155,7 +155,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 min={0}
                 step={0.01}
                 placeholder="0.00"
-                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none ${
+                className={`w-full px-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 rounded-xl transition-all duration-200 outline-none text-black ${
                   focusedField === 'price'
                     ? 'border-purple-500 ring-4 ring-purple-200 shadow-md'
                     : 'border-purple-200 hover:border-purple-300'
