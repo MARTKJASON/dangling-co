@@ -41,7 +41,7 @@ export const useProductDetails = (productId: string): UseProductDetailsReturn =>
     const msg = `Hi! I'm interested in ordering the "${product.name}" (₱${product.price}).\n\n📸 Image: ${product.image_url}\n\nCould you please provide more details about customization options and delivery time? Thank you!`;
     const encoded = encodeURIComponent(msg);
     const appLink = `https://m.me/696684716864112?text=${encoded}`;
-    const webLink = 'https://www.facebook.com/profile.php?id=61577634874235';
+    const webLink = 'https://m.me/696684716864112';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {

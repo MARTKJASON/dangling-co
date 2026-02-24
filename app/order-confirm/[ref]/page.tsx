@@ -4,8 +4,8 @@ import React, { FC, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Copy, Check, MessageCircle, ArrowLeft, ExternalLink } from 'lucide-react';
 
-const FACEBOOK_PAGE_URL = 'https://www.facebook.com/profile.php?id=61577634874235';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://yourdomain.com';
+const FACEBOOK_PAGE_URL = 'https://m.me/696684716864112';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ;
 
 const OrderConfirmPage: FC = () => {
   const params = useParams();
