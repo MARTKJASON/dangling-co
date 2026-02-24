@@ -13,7 +13,7 @@ interface StorePageProps {
 }
 
 const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
-  const categories: Category[] = ['keychain', 'necklace', 'bracelet', 'anklet', 'magnet'];
+  const categories: Category[] = ['keychain', 'necklace', 'bracelet / anklet', 'magnet'];
   const [activeCategory, setActiveCategory] = useState<Category>('keychain');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -172,9 +172,8 @@ const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
           <div className="flex items-center gap-3 mb-8 md:mb-10">
             <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${
               activeCategory === 'necklace' ? 'from-purple-400 to-pink-300' :
-              activeCategory === 'bracelet' ? 'from-blue-400 to-cyan-300' :
+              activeCategory === 'bracelet / anklet' ? 'from-blue-400 to-cyan-300' :
               activeCategory === 'keychain' ? 'from-amber-400 to-orange-300' :
-              activeCategory === 'anklet' ? 'from-rose-400 to-red-300' :
               'from-green-400 to-emerald-300'
             } shadow-md`} />
             <h2 className={`text-xl md:text-2xl font-bold text-gray-800 capitalize transition-all duration-300 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
@@ -182,9 +181,8 @@ const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
             </h2>
             <div className={`h-1 flex-grow bg-gradient-to-r ${
               activeCategory === 'necklace' ? 'from-purple-200 to-transparent' :
-              activeCategory === 'bracelet' ? 'from-blue-200 to-transparent' :
+              activeCategory === 'bracelet / anklet' ? 'from-blue-200 to-transparent' :
               activeCategory === 'keychain' ? 'from-amber-200 to-transparent' :
-              activeCategory === 'anklet' ? 'from-rose-200 to-transparent' :
               'from-green-200 to-transparent'
             } rounded-full`} />
           </div>

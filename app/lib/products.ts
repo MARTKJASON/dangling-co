@@ -13,10 +13,9 @@ export interface Product {
 export interface ProductsByCategory {
   [key: string]: Product[];
   necklace: Product[];
-  bracelet: Product[];
+  'bracelet / anklet': Product[];
   keychain: Product[];
-  anklet: Product[];
   magnet: Product[];
 }
 
-export type Category = 'necklace' | 'bracelet' | 'keychain' | 'anklet' | 'magnet';
+export type Category = 'necklace' | 'bracelet / anklet' | 'keychain' | 'magnet';

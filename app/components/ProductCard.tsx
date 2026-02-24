@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import React, { FC } from 'react';
 import { Gem, ArrowUpRight } from 'lucide-react';
 
@@ -43,10 +44,14 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
             }}
           />
 
-          <img
+          <Image
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlOGZmIi8+PC9zdmc+"
           />
 
           {/* Gradient vignette at the bottom for text readability */}
@@ -84,10 +89,10 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
 
           {/* ── Bottom divider + price echo ─────────────────────────── */}
           <div className="pt-3 border-t border-purple-50 flex items-center justify-between">
-            {/* <p className={`text-base font-black bg-gradient-to-r ${ribbon} bg-clip-text text-transparent`}>
+            <p className={`text-base font-black bg-gradient-to-r ${ribbon} bg-clip-text text-transparent`}>
               ₱{product.price}
-            </p> */}
-            <span className="text-xs text-purple-400 font-semibold tracking-wide uppercase hidden sm:inline">
+            </p>
+            <span className="text-xs text-purple-400 font-semibold tracking-wide uppercase">
               View details →
             </span>
           </div>

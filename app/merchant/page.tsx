@@ -25,7 +25,7 @@ interface Toast {
 type Tab = 'products' | 'orders';
 
 const MerchantPage: FC = () => {
-  const categories: Category[] = ['keychain', 'necklace', 'bracelet', 'anklet', 'magnet'];
+  const categories: Category[] = ['keychain', 'necklace', 'bracelet / anklet', 'magnet'];
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('products');
 

@@ -37,7 +37,7 @@ export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => 
 
   if (!open) return null;
 
-  console.log('item.product.image_url', items[0]?.product.image_url);
+ 
   return (
     <>
       {/* Backdrop */}
@@ -150,7 +150,7 @@ export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => 
           <div className="px-4 py-4 border-t border-purple-100 space-y-3 bg-white">
             {/* Total */}
             <div className="flex items-center justify-between px-1">
-              <span className="text-sm font-semibold text-gray-600">Total</span>
+              <span className="text-sm font-semibold text-gray-600">Initial Total Price</span>
               <span className="text-xl font-black bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
                 ₱{totalPrice().toFixed(2)}
               </span>

@@ -12,7 +12,7 @@ interface ProductsByCategory {
   [key: string]: Product[];
 }
 
-export type Category = 'necklace' | 'bracelet' | 'keychain' | 'anklet' | 'magnet';
+export type Category = 'necklace' | 'bracelet / anklet' | 'keychain' | 'magnet';
 
 interface CategoryTabsProps {
   categories: Category[];
@@ -23,17 +23,15 @@ interface CategoryTabsProps {
 // Bead-inspired icons for each category
 const categoryIcons: Record<Category, string> = {
   necklace: '✨',
-  bracelet: '🌀',
+  'bracelet / anklet': '🌀',
   keychain: '🔑',
-  anklet: '💫',
   magnet: '🧲',
 };
 
 const categoryColors: Record<Category, string> = {
   necklace: 'from-purple-400 to-pink-300',
-  bracelet: 'from-blue-400 to-cyan-300',
+  'bracelet / anklet': 'from-blue-400 to-cyan-300',
   keychain: 'from-amber-400 to-orange-300',
-  anklet: 'from-rose-400 to-red-300',
   magnet: 'from-green-400 to-emerald-300',
 };
 

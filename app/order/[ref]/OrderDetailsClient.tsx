@@ -48,7 +48,6 @@ export const OrderDetailsClient: FC<Props> = ({ order }) => {
     hour: '2-digit',
     minute: '2-digit',
   });
-  console.log(order.order_items[0]?.product_image_url, 'product_image_url');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] via-[#f5e4c0] to-[#f0d9b5] px-4 py-10">
@@ -147,6 +146,14 @@ export const OrderDetailsClient: FC<Props> = ({ order }) => {
               ₱{Number(order.total_price).toFixed(2)}
             </span>
           </div>
+        </div>
+
+        {/* Shipping fee notice */}
+        <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-200">
+          <span className="text-lg flex-shrink-0">⚠️</span>
+          <p className="text-sm text-amber-800 font-semibold">
+            Shipping fee is <strong>not included</strong> in the total price. Final shipping cost will be discussed via Messenger.
+          </p>
         </div>
 
         {/* Info box */}

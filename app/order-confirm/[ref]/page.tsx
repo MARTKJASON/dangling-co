@@ -17,9 +17,12 @@ const OrderConfirmPage: FC = () => {
   const orderUrl = `${APP_URL}/order/${ref}`;
 
   const messageText =
-    `Hi! I want to order.\n` +
+    `Hi! I’m interested in placing an order.\n` +
+    `Could you please share more details about the available customization options and the estimated delivery time?\n` +
+    `For your reference:\n` +
     `Order Ref: ${ref}\n` +
-    `Order Details: ${orderUrl}`;
+    `Order Details: ${orderUrl}\n` +
+    `Thank you, and I look forward to your response!`;
 
   const handleCopy = async () => {
     try {
