@@ -14,6 +14,7 @@ interface ProductListProps {
   activeCategory: Category;
   onSearchChange: (query: string) => void;
   onCategoryChange: (category: Category) => void;
+  onEdit: (product: Product) => void;   // ← new prop
   onDelete: (id: string, imageUrl: string) => void;
 }
 
@@ -25,17 +26,18 @@ export const ProductList: React.FC<ProductListProps> = ({
   activeCategory,
   onSearchChange,
   onCategoryChange,
+  onEdit,
   onDelete,
 }) => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Filter products
   const filteredProducts = useMemo(() => {
     return products
       .filter((p) => p.category === activeCategory)
-      .filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
   }, [products, activeCategory, searchQuery]);
 
@@ -65,9 +67,8 @@ export const ProductList: React.FC<ProductListProps> = ({
           )}
         </div>
 
-        {/* Category Filters */}
+        {/* Category Filters - Desktop */}
         <div>
-          {/* Desktop - Show all categories */}
           <div className="hidden sm:flex gap-2 overflow-x-auto pb-2">
             {categories.map((cat) => (
               <button
@@ -84,7 +85,7 @@ export const ProductList: React.FC<ProductListProps> = ({
             ))}
           </div>
 
-          {/* Mobile - Compact filter button */}
+          {/* Category Filters - Mobile */}
           <div className="sm:hidden flex items-center gap-2">
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
@@ -98,7 +99,6 @@ export const ProductList: React.FC<ProductListProps> = ({
             </div>
           </div>
 
-          {/* Mobile Filter Dropdown */}
           {showMobileFilters && (
             <div className="sm:hidden grid grid-cols-2 gap-2 mt-3 animate-in fade-in slide-in-from-top-2">
               {categories.map((cat) => (
@@ -147,6 +147,7 @@ export const ProductList: React.FC<ProductListProps> = ({
               key={product.id}
               product={product}
               loading={loading}
+              onEdit={onEdit}       // ← pass down
               onDelete={onDelete}
             />
           ))}

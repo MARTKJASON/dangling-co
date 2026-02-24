@@ -7,10 +7,12 @@ import { Category } from '../lib/products';
 import { useProducts } from '../hooks/useProducts';
 import { useProductUpload } from '../hooks/useProductUpload';
 import { useProductFilter } from '../hooks/useProductFilter';
+import { useProductEdit } from '../hooks/useProductEdit'; 
 import { UserHeader } from './components/UserHeader';
 import { LoginPage } from './components/LoginPage';
 import { ProductForm } from './components/ProductForm';
 import { ProductList } from './components/ProductList';
+import { EditProductModal } from './components/EditProductModal'; // ← new modal
 
 interface Toast {
   id: string;
@@ -33,7 +35,7 @@ const MerchantPage: FC = () => {
   } = useAuth();
 
   // Hooks for product management
-  const { products, loading, loadProducts, deleteProduct, addProduct } = useProducts();
+  const { products, loading, loadProducts, deleteProduct, addProduct, updateProduct } = useProducts();
   const {
     formData,
     imageFile,
@@ -47,6 +49,21 @@ const MerchantPage: FC = () => {
   } = useProductUpload();
   const { searchQuery, activeCategory, filteredProducts, setSearchQuery, setActiveCategory } =
     useProductFilter(products);
+
+  const {
+    editingProduct,
+    editFormData,
+    imagePreview: editImagePreview,
+    updating,
+    error: editError,
+    openEdit,
+    closeEdit,
+    setEditFormData,
+    handleImageChange: handleEditImageChange,
+    removeImage: removeEditImage,
+    updateProduct: commitEdit,
+  } = useProductEdit();
+
 
   // Load products on mount (only if authenticated)
   useEffect(() => {
@@ -108,7 +125,7 @@ const MerchantPage: FC = () => {
             </p>
           </div>
 
-          {/* Two-Column Layout: Form (Left) and List (Right) on Desktop, Stacked on Mobile */}
+          {/* Two-Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             {/* Left Column - Product Form */}
             <div className="lg:col-span-1">
@@ -125,9 +142,7 @@ const MerchantPage: FC = () => {
                   }}
                   onImageChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) {
-                      handleImageChange(file);
-                    }
+                    if (file) handleImageChange(file);
                   }}
                   onImageRemove={removeImage}
                   onSubmit={async (e) => {
@@ -136,7 +151,6 @@ const MerchantPage: FC = () => {
                       const newProduct = await uploadProduct();
                       addProduct(newProduct);
                       addToast('Product uploaded successfully!', 'success');
-                      // Reset form
                       setFormData({ name: '', description: '', category: 'keychain', price: 0 });
                       removeImage();
                     } catch (err) {
@@ -158,6 +172,7 @@ const MerchantPage: FC = () => {
                 activeCategory={activeCategory}
                 onSearchChange={setSearchQuery}
                 onCategoryChange={setActiveCategory}
+                onEdit={openEdit} // ← pass openEdit handler
                 onDelete={async (id, imageUrl) => {
                   try {
                     await deleteProduct(id, imageUrl);
@@ -172,6 +187,38 @@ const MerchantPage: FC = () => {
           </div>
         </div>
       </main>
+
+      {/* ── Edit Product Modal ─────────────────────────────────────────────── */}
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          formData={editFormData}
+          imagePreview={editImagePreview}
+          updating={updating}
+          error={editError}
+          categories={categories}
+          onInputChange={(e) => {
+            const { name, value } = e.target;
+            setEditFormData({ [name]: name === 'price' ? parseFloat(value) || 0 : value });
+          }}
+          onImageChange={handleEditImageChange}
+          onImageRemove={removeEditImage}
+          onClose={closeEdit}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              const updatedProduct = await commitEdit();
+              updateProduct(updatedProduct); // update in local state
+              addToast('Product updated successfully!', 'success');
+              closeEdit();
+            } catch (err) {
+              console.error('Error updating product:', err);
+              addToast('Failed to update product', 'error');
+            }
+          }}
+        />
+      )}
+      {/* ──────────────────────────────────────────────────────────────────── */}
 
       {/* Toast Notifications */}
       <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 space-y-3 pointer-events-none">

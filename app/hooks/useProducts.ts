@@ -11,6 +11,7 @@ interface UseProductsReturn {
   deleteProduct: (id: string, imageUrl: string) => Promise<void>;
   addProduct: (product: Product) => void;
   removeProduct: (id: string) => void;
+  updateProduct: (product: Product) => void; // ← added
 }
 
 export const useProducts = (): UseProductsReturn => {
@@ -80,6 +81,11 @@ export const useProducts = (): UseProductsReturn => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  // Replaces the matching product in local state with the updated version
+  const updateProduct = useCallback((product: Product) => {
+    setProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
+  }, []);
+
   return {
     products,
     loading,
@@ -88,5 +94,6 @@ export const useProducts = (): UseProductsReturn => {
     deleteProduct,
     addProduct,
     removeProduct,
+    updateProduct,
   };
 };
