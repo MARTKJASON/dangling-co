@@ -6,6 +6,7 @@ import CategoryTabs, { Category } from '../components/CategoryTabs';
 import ProductCard from '../components/ProductCard';
 import { useRouter } from 'next/navigation';
 import { useProducts } from '../hooks/useProducts';
+import { OrderListFAB } from '../components/OrderListFAB';
 
 interface StorePageProps {
   onCustomizeClick: () => void;
@@ -256,6 +257,7 @@ const StorePage: FC<StorePageProps> = ({ onCustomizeClick }) => {
           </p>
         </div>
       </div>
+              <OrderListFAB />
     </div>
   );
 };

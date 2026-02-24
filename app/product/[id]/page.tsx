@@ -15,6 +15,8 @@ import {
   ErrorScreen,
   NotFoundScreen,
 } from './components/ProductDetailsStateScreens';
+import { AddToOrderButton } from './components/AddtoOrderButton';
+import { OrderListFAB } from '@/app/components/OrderListFAB';
 
 const ProductDetailsPage: FC = () => {
   const params = useParams();
@@ -52,7 +54,7 @@ const ProductDetailsPage: FC = () => {
 
           {/* Right — details */}
           <div className="flex flex-col gap-7">
-
+            <AddToOrderButton product={product} />
             {/* Category tag */}
             <div className={`inline-flex items-center gap-2 self-start px-4 py-2 rounded-full ${color.bg} ${color.text} border ${color.border} font-semibold text-sm`}>
               <span className="text-lg">{emoji}</span>
@@ -76,14 +78,9 @@ const ProductDetailsPage: FC = () => {
 
             <WhyLoveIt color={color} />
 
-            <ProductCTA
-              color={color}
-              isMessageSent={isMessageSent}
-              onOrder={handleMessageOrder}
-            />
           </div>
         </div>
-
+        <OrderListFAB />
         {/* Customer feedback */}
         <div className="mt-24 pt-16 border-t-2 border-amber-200/60">
           <CustomerFeedbackCarousel />
