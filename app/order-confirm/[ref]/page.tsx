@@ -17,9 +17,7 @@ const OrderConfirmPage: FC = () => {
   const orderUrl = `${APP_URL}/order/${ref}`;
 
   const messageText =
-    `Hi! I’m interested in placing an order.\n` +
-    `Could you please share more details about the available customization options and the estimated delivery time?\n` +
-    `For your reference:\n` +
+    `Hi! I'd like to order 🌸\n` +
     `Order Ref: ${ref}\n` +
     `Order Details: ${orderUrl}\n` +
     `Thank you, and I look forward to your response!`;
@@ -62,11 +60,11 @@ const OrderConfirmPage: FC = () => {
       <div className="relative w-full max-w-md space-y-5">
 
         {/* Success header */}
-        <div className="text-center space-y-2">
-          <div className="text-5xl animate-bounce">🎉</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Order Created!</h1>
+         <div className="text-center space-y-2">
+          <div className="text-5xl animate-bounce">🎀</div>
+          <h1 className="text-2xl font-extrabold text-gray-900">You're almost done!</h1>
           <p className="text-gray-500 text-sm">
-            Copy your order details, then message us on Facebook.
+            Copy your order ref below, then send it to us on Facebook to confirm.
           </p>
         </div>
 
