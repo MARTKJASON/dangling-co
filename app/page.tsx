@@ -32,7 +32,7 @@ export default function Customize() {
       )}
 
       {currentPage === 'store' && (
-        <StorePage onCustomizeClick={handleCustomize} />
+        <StorePage />
       )}
 
       {currentPage === 'customize' && (
