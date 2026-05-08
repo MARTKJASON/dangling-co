@@ -36,15 +36,17 @@ const MerchantPage: FC = () => {
 
   const { products, loading, loadProducts, deleteProduct, addProduct, updateProduct } = useProducts();
   const {
-    formData, imagePreview, uploading, error: uploadError,
-    setFormData, handleImageChange, removeImage, uploadProduct,
+    formData, images, uploading, error: uploadError,
+    setFormData, addImages, removeImage, removeAllImages, reorderImage, uploadProduct,
   } = useProductUpload();
   const { searchQuery, activeCategory, setSearchQuery, setActiveCategory } = useProductFilter(products);
   const {
-    editingProduct, editFormData, imagePreview: editImagePreview, updating, error: editError,
+    editingProduct, editFormData, imageSlots, updating, error: editError,
     openEdit, closeEdit, setEditFormData,
-    handleImageChange: handleEditImageChange,
+    addImages: addEditImages,
+    replaceImage: replaceEditImage,
     removeImage: removeEditImage,
+    reorderImage: reorderEditImage,
     updateProduct: commitEdit,
   } = useProductEdit();
 
@@ -146,19 +148,17 @@ const MerchantPage: FC = () => {
                 <div className="sticky top-24 sm:top-28 lg:top-32 z-30">
                   <ProductForm
                     formData={formData}
-                    imagePreview={imagePreview}
+                    images={images}
                     uploading={uploading}
                     error={uploadError}
                     categories={categories}
                     onInputChange={(e) => {
                       const { name, value } = e.target;
-                      setFormData({ [name]: value });
+                      setFormData({ [name]: name === 'price' ? parseFloat(value) || 0 : value });
                     }}
-                    onImageChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageChange(file);
-                    }}
-                    onImageRemove={removeImage}
+                    onAddImages={addImages}
+                    onRemoveImage={removeImage}
+                    onReorderImage={reorderImage}
                     onSubmit={async (e) => {
                       e.preventDefault();
                       try {
@@ -166,7 +166,7 @@ const MerchantPage: FC = () => {
                         addProduct(newProduct);
                         addToast('Product uploaded successfully!', 'success');
                         setFormData({ name: '', description: '', category: 'keychain', price: 0 });
-                        removeImage();
+                        removeAllImages();
                       } catch (err) {
                         console.error('Error uploading product:', err);
                         addToast('Failed to upload product', 'error');
@@ -213,7 +213,7 @@ const MerchantPage: FC = () => {
         <EditProductModal
           product={editingProduct}
           formData={editFormData}
-          imagePreview={editImagePreview}
+          imageSlots={imageSlots}
           updating={updating}
           error={editError}
           categories={categories}
@@ -221,8 +221,10 @@ const MerchantPage: FC = () => {
             const { name, value } = e.target;
             setEditFormData({ [name]: name === 'price' ? parseFloat(value) || 0 : value });
           }}
-          onImageChange={handleEditImageChange}
-          onImageRemove={removeEditImage}
+          onAddImages={addEditImages}
+          onReplaceImage={replaceEditImage}
+          onRemoveImage={removeEditImage}
+          onReorderImage={reorderEditImage}
           onClose={closeEdit}
           onSubmit={async (e) => {
             e.preventDefault();

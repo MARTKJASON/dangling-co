@@ -3,6 +3,7 @@
 import React, { FC } from 'react';
 import { useParams } from 'next/navigation';
 import CustomerFeedbackCarousel from '@/app/components/CustomerFeedback';
+import { getProductImages } from '@/app/types/product';
 
 import { useProductDetails } from './hooks/useProductDetails';
 import { ProductDetailsNav } from './components/ProductDetailsNav';
@@ -46,7 +47,7 @@ const ProductDetailsPage: FC = () => {
 
           {/* Left — image */}
           <ProductImagePanel
-            imageUrl={product.image_url}
+            imageUrls={getProductImages(product)}
             name={product.name}
             price={product.price}
             color={color}

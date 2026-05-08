@@ -1,25 +1,33 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/app/lib/supabase';
 import { Category } from '../components/CategoryTabs';
-import { Product } from '../types/product';
-
+import { MAX_PRODUCT_IMAGES, Product } from '../types/product';
+import { isImageUrlsColumnAvailable, markImageUrlsColumnMissing } from './useProducts';
 
 interface UploadFormData {
   name: string;
   description: string;
   category: Category;
-  price: number; 
+  price: number;
+}
+
+export interface PendingImage {
+  id: string;
+  file: File;
+  preview: string;
 }
 
 interface UseProductUploadReturn {
   formData: UploadFormData;
-  imageFile: File | null;
+  images: PendingImage[];
   imagePreview: string;
   uploading: boolean;
   error: string | null;
   setFormData: (data: Partial<UploadFormData>) => void;
-  handleImageChange: (file: File) => void;
-  removeImage: () => void;
+  addImages: (files: FileList | File[]) => void;
+  removeImage: (id: string) => void;
+  removeAllImages: () => void;
+  reorderImage: (id: string, direction: 'left' | 'right') => void;
   uploadProduct: () => Promise<Product>;
   resetForm: () => void;
 }
@@ -28,41 +36,86 @@ const initialFormData: UploadFormData = {
   name: '',
   description: '',
   category: 'keychain' as Category,
-  price: 0, 
+  price: 0,
 };
+
+const readFileAsDataURL = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.readAsDataURL(file);
+  });
 
 export const useProductUpload = (): UseProductUploadReturn => {
   const [formData, setFormData] = useState<UploadFormData>(initialFormData);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateFormData = useCallback((updates: Partial<UploadFormData>) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...updates,
-    }));
+    setFormData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const handleImageChange = useCallback((file: File) => {
-    setImageFile(file);
+  const addImages = useCallback(async (files: FileList | File[]) => {
     setError(null);
+    const fileArr = Array.from(files);
+    if (fileArr.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
+    setImages((prev) => {
+      const remaining = MAX_PRODUCT_IMAGES - prev.length;
+      if (remaining <= 0) {
+        setError(`You can upload at most ${MAX_PRODUCT_IMAGES} images per product.`);
+        return prev;
+      }
+      if (fileArr.length > remaining) {
+        setError(`Only ${remaining} more image${remaining === 1 ? '' : 's'} can be added (max ${MAX_PRODUCT_IMAGES}).`);
+      }
+      return prev;
+    });
+
+    // Generate previews for accepted files
+    const accepted: PendingImage[] = [];
+    for (const file of fileArr) {
+      try {
+        const preview = await readFileAsDataURL(file);
+        accepted.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          file,
+          preview,
+        });
+      } catch (err) {
+        console.warn('Could not read file', file.name, err);
+      }
+    }
+
+    setImages((prev) => {
+      const remaining = MAX_PRODUCT_IMAGES - prev.length;
+      if (remaining <= 0) return prev;
+      return [...prev, ...accepted.slice(0, remaining)];
+    });
   }, []);
 
-  const removeImage = useCallback(() => {
-    setImagePreview('');
-    setImageFile(null);
+  const removeImage = useCallback((id: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
     setError(null);
+  }, []);
+
+  const removeAllImages = useCallback(() => {
+    setImages([]);
+    setError(null);
+  }, []);
+
+  const reorderImage = useCallback((id: string, direction: 'left' | 'right') => {
+    setImages((prev) => {
+      const idx = prev.findIndex((img) => img.id === id);
+      if (idx < 0) return prev;
+      const target = direction === 'left' ? idx - 1 : idx + 1;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
   }, []);
 
   const validateForm = (): boolean => {
@@ -74,14 +127,14 @@ export const useProductUpload = (): UseProductUploadReturn => {
       setError('Product description is required');
       return false;
     }
-    if (!imageFile) {
-      setError('Product image is required');
+    if (images.length === 0) {
+      setError('At least one product image is required');
       return false;
     }
-     if (formData.price <= 0) {
-    setError('Product price must be greater than 0');
-    return false;
-  }
+    if (formData.price <= 0) {
+      setError('Product price must be greater than 0');
+      return false;
+    }
     return true;
   };
 
@@ -94,36 +147,54 @@ export const useProductUpload = (): UseProductUploadReturn => {
     setError(null);
 
     try {
-      // Upload image to storage
-      const timestamp = Date.now();
-      const filename = `${timestamp}-${imageFile!.name}`;
-      const filePath = `products/${formData.category}/${filename}`;
+      // Upload all images sequentially so we keep their ordering deterministic
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        const { file } = images[i];
+        const timestamp = Date.now();
+        const filename = `${timestamp}-${i}-${file.name}`;
+        const filePath = `products/${formData.category}/${filename}`;
 
-      const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('products')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      const basePayload = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        image_url: uploadedUrls[0],
+        price: formData.price,
+      };
+      const payload: any = isImageUrlsColumnAvailable()
+        ? { ...basePayload, image_urls: uploadedUrls }
+        : basePayload;
+
+      let { data, error: insertError } = await supabase
         .from('products')
-        .upload(filePath, imageFile!);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('products')
-        .getPublicUrl(filePath);
-
-      const imageUrl = urlData.publicUrl;
-
-      // Save to database
-      const { data, error: insertError } = await supabase
-        .from('products')
-        .insert({
-          name: formData.name.trim(),
-          description: formData.description.trim(),
-          category: formData.category,
-          image_url: imageUrl,
-          price: formData.price,
-        })
+        .insert(payload)
         .select()
         .single();
+
+      if (insertError && (insertError as any).code === '42703' && payload.image_urls) {
+        markImageUrlsColumnMissing();
+        const retry = await supabase
+          .from('products')
+          .insert(basePayload)
+          .select()
+          .single();
+        data = retry.data;
+        insertError = retry.error;
+      }
 
       if (insertError) throw insertError;
 
@@ -137,24 +208,25 @@ export const useProductUpload = (): UseProductUploadReturn => {
     } finally {
       setUploading(false);
     }
-  }, [formData, imageFile, error]);
+  }, [formData, images, error]);
 
   const resetForm = useCallback(() => {
     setFormData(initialFormData);
-    setImageFile(null);
-    setImagePreview('');
+    setImages([]);
     setError(null);
   }, []);
 
   return {
     formData,
-    imageFile,
-    imagePreview,
+    images,
+    imagePreview: images[0]?.preview ?? '',
     uploading,
     error,
     setFormData: updateFormData,
-    handleImageChange,
+    addImages,
     removeImage,
+    removeAllImages,
+    reorderImage,
     uploadProduct,
     resetForm,
   };

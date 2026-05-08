@@ -18,6 +18,12 @@ let cachedProducts: Product[] | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL_MS = 60_000; // 1 minute
 
+// Tracks whether the optional image_urls column exists. Set to false on the
+// first 42703 (undefined column) error so subsequent queries skip it.
+let imageUrlsColumnAvailable = true;
+export const isImageUrlsColumnAvailable = () => imageUrlsColumnAvailable;
+export const markImageUrlsColumnMissing = () => { imageUrlsColumnAvailable = false; };
+
 export const useProducts = (): UseProductsReturn => {
   const [products, setProducts] = useState<Product[]>(cachedProducts ?? []);
   const [loading, setLoading] = useState(false);
@@ -44,11 +50,36 @@ export const useProducts = (): UseProductsReturn => {
       setLoading(true);
       setError(null);
 
-      const { data, error: queryError } = await supabase
-        .from('products')
-        // Only fetch the fields the store page actually needs — smaller payload
-        .select('id, name, description, price, image_url, category, created_at')
-        .order('created_at', { ascending: false });
+      const fetchWithImageUrls = () =>
+        supabase
+          .from('products')
+          .select('id, name, description, price, image_url, image_urls, category, created_at')
+          .order('created_at', { ascending: false });
+
+      const fetchWithoutImageUrls = () =>
+        supabase
+          .from('products')
+          .select('id, name, description, price, image_url, category, created_at')
+          .order('created_at', { ascending: false });
+
+      let data: any = null;
+      let queryError: any = null;
+
+      if (imageUrlsColumnAvailable) {
+        const res = await fetchWithImageUrls();
+        data = res.data;
+        queryError = res.error;
+        if (queryError && queryError.code === '42703') {
+          imageUrlsColumnAvailable = false;
+          const retry = await fetchWithoutImageUrls();
+          data = retry.data;
+          queryError = retry.error;
+        }
+      } else {
+        const res = await fetchWithoutImageUrls();
+        data = res.data;
+        queryError = res.error;
+      }
 
       if (queryError) throw queryError;
 
@@ -72,9 +103,18 @@ export const useProducts = (): UseProductsReturn => {
       setError(null);
 
       try {
-        const filePath = imageUrl.split('/storage/v1/object/public/products/')[1];
-        if (filePath) {
-          await supabase.storage.from('products').remove([decodeURIComponent(filePath)]);
+        const target = cachedProducts?.find(p => p.id === id);
+        const urls = new Set<string>();
+        if (imageUrl) urls.add(imageUrl);
+        target?.image_urls?.forEach(u => { if (u) urls.add(u); });
+
+        const paths = Array.from(urls)
+          .map(u => u.split('/storage/v1/object/public/products/')[1])
+          .filter((p): p is string => Boolean(p))
+          .map(decodeURIComponent);
+
+        if (paths.length > 0) {
+          await supabase.storage.from('products').remove(paths);
         }
       } catch (err) {
         console.warn('Could not delete image:', err);

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Upload, Loader, Image as ImageIcon, X, AlertCircle } from 'lucide-react';
+import { Upload, Loader, ImagePlus, X, AlertCircle, ArrowLeft, ArrowRight, Star } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import { Category } from '@/app/components/CategoryTabs';
+import { MAX_PRODUCT_IMAGES } from '@/app/types/product';
+import type { PendingImage } from '@/app/hooks/useProductUpload';
 
 interface ProductFormProps {
   formData: {
@@ -12,32 +14,37 @@ interface ProductFormProps {
     category: Category;
     price: number | string;
   };
-  imagePreview: string;
+  images: PendingImage[];
   uploading: boolean;
   error?: string | null;
   categories: Category[];
   onInputChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onImageRemove: () => void;
+  onAddImages: (files: FileList) => void;
+  onRemoveImage: (id: string) => void;
+  onReorderImage: (id: string, direction: 'left' | 'right') => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   formData,
-  imagePreview,
+  images,
   uploading,
   error,
   categories,
   onInputChange,
-  onImageChange,
-  onImageRemove,
+  onAddImages,
+  onRemoveImage,
+  onReorderImage,
   onSubmit,
 }) => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const isFormValid = formData.name && formData.description && formData.category && formData.price && imagePreview;
+  const isFormValid =
+    formData.name && formData.description && formData.category && formData.price && images.length > 0;
+  const remainingSlots = Math.max(0, MAX_PRODUCT_IMAGES - images.length);
+  const canAddMore = remainingSlots > 0 && !uploading;
 
   return (
     <div className="w-full bg-gradient-to-br from-white to-purple-50 rounded-2xl border-2 border-purple-200 p-4 sm:p-6 lg:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -64,15 +71,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       )}
 
       <form onSubmit={onSubmit} className="space-y-6">
-        {/* Grid Layout - Responsive */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Form Inputs */}
           <div className="space-y-5">
-            {/* Product Name */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Product Name *
-              </label>
+              <label className="block text-sm font-semibold text-gray-700">Product Name *</label>
               <input
                 type="text"
                 name="name"
@@ -91,11 +94,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <p className="text-xs text-gray-500">{formData.name.length}/100</p>
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Description *
-              </label>
+              <label className="block text-sm font-semibold text-gray-700">Description *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -114,11 +114,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <p className="text-xs text-gray-500">{formData.description.length}/500</p>
             </div>
 
-            {/* Category */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Category *
-              </label>
+              <label className="block text-sm font-semibold text-gray-700">Category *</label>
               <select
                 name="category"
                 value={formData.category}
@@ -140,11 +137,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </select>
             </div>
 
-            {/* Price */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Price (₱) *
-              </label>
+              <label className="block text-sm font-semibold text-gray-700">Price (₱) *</label>
               <input
                 type="number"
                 name="price"
@@ -164,62 +158,98 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             </div>
           </div>
 
-          {/* Right Column - Image Upload */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Product Image *
-            </label>
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={onImageChange}
-                className="hidden"
-                id="image-input"
-                disabled={uploading}
-              />
-              <label
-                htmlFor="image-input"
-                className={`flex flex-col items-center justify-center w-full aspect-square border-4 border-dashed rounded-2xl cursor-pointer transition-all duration-300 ${
-                  uploading
-                    ? 'border-gray-300 bg-gray-50 opacity-50 cursor-not-allowed'
-                    : imagePreview
-                    ? 'border-purple-300 bg-white'
-                    : 'border-purple-300 bg-purple-50 hover:border-purple-500 hover:bg-purple-100'
-                }`}
-              >
-                {imagePreview ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 rounded-xl transition-all flex items-center justify-center opacity-0 hover:opacity-100">
-                      <p className="text-white text-sm font-semibold">Change image</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-                    <div className="p-3 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg mb-3">
-                      <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                    <p className="text-sm font-semibold text-gray-700">Click to upload</p>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 50MB</p>
-                  </div>
-                )}
+          {/* Right Column - Multi-image Gallery */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-semibold text-gray-700">
+                Product Images * <span className="text-xs text-gray-500 font-normal">(up to {MAX_PRODUCT_IMAGES})</span>
               </label>
+              <span className="text-xs font-semibold text-purple-600">
+                {images.length}/{MAX_PRODUCT_IMAGES}
+              </span>
             </div>
-            {imagePreview && (
-              <button
-                type="button"
-                onClick={onImageRemove}
-                className="text-sm text-red-500 hover:text-red-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
-              >
-                <X className="w-4 h-4" />
-                Remove Image
-              </button>
-            )}
+
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {images.map((img, idx) => (
+                <div
+                  key={img.id}
+                  className="relative group aspect-square rounded-xl overflow-hidden border-2 border-purple-200 bg-white shadow-sm"
+                >
+                  <img src={img.preview} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+
+                  {idx === 0 && (
+                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold shadow">
+                      <Star className="w-3 h-3 fill-current" />
+                      Cover
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => onRemoveImage(img.id)}
+                    disabled={uploading}
+                    aria-label="Remove image"
+                    className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center bg-white/95 hover:bg-red-500 hover:text-white text-red-500 rounded-full shadow transition-all disabled:opacity-50"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 px-1 py-1 bg-gradient-to-t from-black/55 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => onReorderImage(img.id, 'left')}
+                      disabled={uploading || idx === 0}
+                      aria-label="Move image left"
+                      className="p-1 rounded-md bg-white/90 hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-bold text-white">{idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => onReorderImage(img.id, 'right')}
+                      disabled={uploading || idx === images.length - 1}
+                      aria-label="Move image right"
+                      className="p-1 rounded-md bg-white/90 hover:bg-white text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {canAddMore && (
+                <label
+                  htmlFor="image-input"
+                  className="flex flex-col items-center justify-center aspect-square border-4 border-dashed border-purple-300 bg-purple-50 hover:border-purple-500 hover:bg-purple-100 rounded-xl cursor-pointer transition-all duration-300 text-center px-2"
+                >
+                  <div className="p-2 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg mb-1">
+                    <ImagePlus className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 leading-tight">Add image</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{remainingSlots} left</p>
+                </label>
+              )}
+            </div>
+
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  onAddImages(e.target.files);
+                }
+                e.target.value = '';
+              }}
+              className="hidden"
+              id="image-input"
+              disabled={!canAddMore}
+            />
+
+            <p className="text-xs text-gray-500">
+              The first image is used as the cover. PNG, JPG, GIF up to 50MB each.
+            </p>
           </div>
         </div>
 
