@@ -1,22 +1,29 @@
 'use client';
 
 import React, { FC, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { X, Trash2, Plus, Minus, ShoppingBag, Loader2, MessageCircle } from 'lucide-react';
 import { useOrderStore } from '../store/useOrderStore';
 import { createOrder } from '../lib/createOrder';
+import { OrderItem } from '../lib/order';
+import { OrderMessengerModal } from './OrderMessengerModal';
 
 interface OrderListDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
+interface ConfirmedOrder {
+  ref: string;
+  items: OrderItem[];
+  totalPrice: number;
+}
+
 export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => {
-  const router = useRouter();
   const { items, removeItem, updateQuantity, updateNote, clearOrder, totalPrice, totalItems } =
     useOrderStore();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<ConfirmedOrder | null>(null);
 
   const handleSubmit = async () => {
     if (items.length === 0) return;
@@ -24,10 +31,12 @@ export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => 
     setError(null);
 
     try {
-      const { ref } = await createOrder(items);
+      // Snapshot the cart before clearing so the modal can show order details.
+      const snapshot = items.map((i) => ({ ...i }));
+      const total = totalPrice();
+      const { ref } = await createOrder(snapshot);
+      setConfirmed({ ref, items: snapshot, totalPrice: total });
       clearOrder();
-      onClose();
-      router.push(`/order-confirm/${ref}`);
     } catch (err: any) {
       setError(err.message ?? 'Something went wrong. Please try again.');
     } finally {
@@ -35,11 +44,18 @@ export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => 
     }
   };
 
-  if (!open) return null;
+  const handleModalClose = () => {
+    setConfirmed(null);
+    onClose();
+  };
+
+  if (!open && !confirmed) return null;
 
  
   return (
     <>
+      {open && (
+        <>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
@@ -186,6 +202,19 @@ export const OrderListDrawer: FC<OrderListDrawerProps> = ({ open, onClose }) => 
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Single-step Messenger checkout modal */}
+      {confirmed && (
+        <OrderMessengerModal
+          open={!!confirmed}
+          onClose={handleModalClose}
+          orderRef={confirmed.ref}
+          items={confirmed.items}
+          totalPrice={confirmed.totalPrice}
+        />
+      )}
     </>
   );
 };
