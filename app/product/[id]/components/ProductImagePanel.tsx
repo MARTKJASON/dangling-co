@@ -1,184 +1,108 @@
 'use client';
 
-import React, { FC, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Gem, Palette } from 'lucide-react';
-import { CategoryColor } from '../categoryConfig';
+import React, { FC, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProductImagePanelProps {
   imageUrls: string[];
   name: string;
-  price: string;
-  color: CategoryColor;
 }
 
 const SWIPE_THRESHOLD = 40;
 
-export const ProductImagePanel: FC<ProductImagePanelProps> = ({ imageUrls, name, price, color }) => {
+/**
+ * Gallery: thumbnails beside the photo on desktop; swipe + dots on phones.
+ * Render it with key={product.id} so it starts at the first photo for each product.
+ */
+export const ProductImagePanel: FC<ProductImagePanelProps> = ({ imageUrls, name }) => {
   const images = imageUrls.length > 0 ? imageUrls : [''];
   const hasMultiple = images.length > 1;
-
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
-  const thumbsRef = useRef<HTMLDivElement>(null);
 
-  const goTo = (idx: number) => {
-    const next = ((idx % images.length) + images.length) % images.length;
-    setCurrent(next);
-  };
-  const next = () => goTo(current + 1);
-  const prev = () => goTo(current - 1);
+  const goTo = (idx: number) => setCurrent(((idx % images.length) + images.length) % images.length);
 
-  // Reset to first image whenever the product images change (e.g. navigation)
-  useEffect(() => { setCurrent(0); }, [imageUrls]);
-
-  // Keyboard arrows
-  useEffect(() => {
-    if (!hasMultiple) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') prev();
-      if (e.key === 'ArrowRight') next();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [hasMultiple, current]);
-
-  // Keep the active thumbnail in view on mobile
-  useEffect(() => {
-    const el = thumbsRef.current?.children[current] as HTMLElement | undefined;
-    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [current]);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current == null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > SWIPE_THRESHOLD) (dx < 0 ? next : prev)();
+    if (Math.abs(dx) > SWIPE_THRESHOLD) goTo(current + (dx < 0 ? 1 : -1));
     touchStartX.current = null;
   };
 
+  // Arrow keys work only while focus is inside the gallery, not page-wide.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!hasMultiple) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+  };
+
   return (
-    <div className="flex items-start justify-center">
-      <div className="relative w-full max-w-md">
-        {/* Glow halo */}
-        <div className={`absolute -inset-4 bg-gradient-to-r ${color.gradient} rounded-3xl opacity-20 blur-2xl`} />
-
-        {/* Image card */}
-        <div
-          className="relative bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-white"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className="relative aspect-square overflow-hidden">
-            {images.map((src, idx) => (
-              <img
-                key={`${src}-${idx}`}
-                src={src}
-                alt={`${name} — image ${idx + 1} of ${images.length}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-                  idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                } ${idx === current ? 'hover:scale-105' : ''} transition-transform`}
-                draggable={false}
-              />
-            ))}
-
-            {hasMultiple && (
-              <>
-                <button
-                  type="button"
-                  onClick={prev}
-                  aria-label="Previous image"
-                  className="absolute top-1/2 left-3 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white shadow-md backdrop-blur flex items-center justify-center text-gray-800 transition-all hover:scale-105 active:scale-95"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={next}
-                  aria-label="Next image"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 w-10 h-10 rounded-full bg-white/85 hover:bg-white shadow-md backdrop-blur flex items-center justify-center text-gray-800 transition-all hover:scale-105 active:scale-95"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Counter */}
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/55 backdrop-blur text-white text-xs font-semibold">
-                  {current + 1} / {images.length}
-                </div>
-
-                {/* Dots */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-                  {images.map((_, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => goTo(idx)}
-                      aria-label={`Go to image ${idx + 1}`}
-                      className={`transition-all duration-300 rounded-full ${
-                        idx === current
-                          ? `w-6 h-2 bg-gradient-to-r ${color.gradient} shadow`
-                          : 'w-2 h-2 bg-white/70 hover:bg-white'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Price badge overlaid on image */}
-          <div className="absolute bottom-4 left-4">
-            <div className={`px-4 py-2 bg-gradient-to-r ${color.gradient} rounded-full shadow-lg`}>
-              <p className="text-white font-black text-lg tracking-wide">₱{price}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Thumbnail strip */}
-        {hasMultiple && (
-          <div
-            ref={thumbsRef}
-            className="mt-4 flex gap-2 overflow-x-auto scroll-smooth pb-1 -mx-1 px-1"
-          >
-            {images.map((src, idx) => (
-              <button
-                key={`thumb-${src}-${idx}`}
-                type="button"
-                onClick={() => goTo(idx)}
-                aria-label={`Show image ${idx + 1}`}
-                className={`relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                  idx === current
-                    ? `${color.border} ring-2 ring-offset-2 ring-offset-transparent`
-                    : 'border-white/80 opacity-70 hover:opacity-100'
-                }`}
-                style={idx === current ? { boxShadow: '0 4px 12px rgba(0,0,0,0.15)' } : undefined}
-              >
-                <img src={src} alt="" className="w-full h-full object-cover" draggable={false} />
-              </button>
-            ))}
-          </div>
+    <div className="flex flex-col md:flex-row-reverse gap-4" onKeyDown={onKeyDown}>
+      <div
+        className="relative flex-1 aspect-[4/5] -mx-4 md:mx-0 md:rounded-[28px] overflow-hidden bg-cream-200 group"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        aria-roledescription="carousel"
+        aria-label={`${name} photos`}
+      >
+        {images.map((src, idx) =>
+          src ? (
+            <img
+              key={`${src}-${idx}`}
+              src={src}
+              alt={`${name}, photo ${idx + 1} of ${images.length}`}
+              aria-hidden={idx !== current}
+              draggable={false}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-soft ${
+                idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+            />
+          ) : null,
         )}
 
-        {/* Floating badges below image */}
-        <div className="flex justify-center gap-3 mt-5 flex-wrap">
-          {[
-            { icon: <Palette className="w-4 h-4" />, label: 'Customizable' },
-            { icon: '✋', label: 'Handmade' },
-            { icon: <Gem className="w-4 h-4" />, label: 'Premium' },
-          ].map((badge, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-amber-200 shadow-sm text-sm font-semibold text-gray-700"
-            >
-              <span className={typeof badge.icon === 'string' ? 'text-base' : color.text}>
-                {badge.icon}
-              </span>
-              {badge.label}
+        {hasMultiple && (
+          <>
+            <button type="button" onClick={() => goTo(current - 1)} aria-label="Previous photo"
+              className="icon-btn !absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 shadow-rest hover:!bg-white hidden md:inline-flex opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity">
+              <ChevronLeft className="w-5 h-5" aria-hidden />
+            </button>
+            <button type="button" onClick={() => goTo(current + 1)} aria-label="Next photo"
+              className="icon-btn !absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 shadow-rest hover:!bg-white hidden md:inline-flex opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity">
+              <ChevronRight className="w-5 h-5" aria-hidden />
+            </button>
+            <span className="absolute right-4 bottom-4 px-3 py-1.5 rounded-full bg-ink-900/70 text-white text-[13px] font-semibold tabular-nums hidden md:block">
+              {current + 1} / {images.length}
+            </span>
+            <div className="absolute inset-x-0 bottom-3.5 flex justify-center gap-1.5 md:hidden" aria-hidden>
+              {images.map((_, idx) => (
+                <span key={idx} className={`h-1.5 rounded-full transition-all duration-200 ${idx === current ? 'w-5 bg-white' : 'w-1.5 bg-white/60'}`} />
+              ))}
             </div>
+          </>
+        )}
+      </div>
+
+      {hasMultiple && (
+        <div className="hidden md:flex flex-col gap-3" role="group" aria-label="Choose a photo">
+          {images.map((src, idx) => (
+            <button
+              key={`thumb-${src}-${idx}`}
+              type="button"
+              onClick={() => goTo(idx)}
+              aria-label={`Show photo ${idx + 1} of ${images.length}`}
+              aria-pressed={idx === current}
+              className={`w-[76px] h-[92px] rounded-[14px] overflow-hidden bg-cream-200 transition-[opacity,box-shadow] duration-200 ${
+                idx === current
+                  ? 'opacity-100 shadow-[0_0_0_2px_var(--color-cream-100),0_0_0_4px_var(--color-peri-600)]'
+                  : 'opacity-75 hover:opacity-100 ring-1 ring-inset ring-cream-300'
+              }`}
+            >
+              <img src={src} alt="" className="w-full h-full object-cover" draggable={false} />
+            </button>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -4,14 +4,19 @@ import UserChat from "@/app/components/UserChat";
 
 
 interface ChatPageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default async function ChatPage({ params }: ChatPageProps) {
-  // params might be async in App Router
-  const token = await params.token; // unwrap if needed
+  const { token } = await params;
 
-  if (!token) return <p>Invalid token</p>;
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4">
+        <p className="px-4 py-3 bg-cherry-100 text-cherry-700 rounded-field text-[15px]">Invalid chat link.</p>
+      </div>
+    );
+  }
 
   return <UserChat token={token} />;
 }

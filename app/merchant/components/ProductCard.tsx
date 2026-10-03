@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trash2, AlertCircle, Pencil } from 'lucide-react';
+import { Trash2, AlertCircle, Pencil, Loader2 } from 'lucide-react';
 import { Product } from '@/app/types/product';
+import { getCategoryInfo } from '@/app/lib/categories';
+import { formatPeso } from '@/app/lib/format';
 
 interface ProductCardProps {
   product: Product;
   loading: boolean;
   onDelete: (id: string, imageUrl: string) => void;
-  onEdit: (product: Product) => void; // ← new prop
+  onEdit: (product: Product) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -30,83 +32,76 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  const categoryLabel = getCategoryInfo(product.category)?.singular ?? product.category;
+
   return (
-    <div className="group h-full bg-white rounded-2xl overflow-hidden border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 shadow-md hover:shadow-xl flex flex-col">
-      {/* Image Section */}
-      <div className="relative h-40 sm:h-48 overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100">
+    <div className="h-full bg-white rounded-card overflow-hidden border border-cream-300 shadow-rest hover:shadow-raised transition-shadow flex flex-col">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden bg-cream-200">
         <img
           src={product.image_url}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-cover"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
       </div>
 
-      {/* Content Section */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow">
-        <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 line-clamp-2">
+      {/* Content */}
+      <div className="p-4 flex flex-col flex-grow gap-1.5">
+        <p className="eyebrow">{categoryLabel}</p>
+        <h3 className="font-display text-lg font-semibold text-ink-900 leading-snug line-clamp-2">
           {product.name}
         </h3>
+        <p className="text-sm text-ink-600 line-clamp-2 flex-grow">{product.description}</p>
+        {product.price ? (
+          <p className="text-base font-bold text-ink-900 tabular-nums mt-1">{formatPeso(product.price)}</p>
+        ) : null}
 
-        <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2 flex-grow">
-          {product.description}
-        </p>
-
-        <div className="flex items-center justify-between mb-4">
-          <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-semibold rounded-full capitalize border border-purple-200">
-            {product.category}
-          </span>
-          {product.price && (
-            <span className="text-sm sm:text-base font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-              ₱{parseFloat(product.price as any).toFixed(2)}
-            </span>
-          )}
-        </div>
-
-        {/* Action Buttons */}
+        {/* Actions */}
         {!showDeleteConfirm ? (
-          <div className="flex gap-2">
-            {/* Edit Button */}
+          <div className="flex items-center gap-2 mt-3">
             <button
+              type="button"
               onClick={() => onEdit(product)}
               disabled={loading || isDeleting}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md active:scale-95"
+              className="btn btn-secondary btn-sm flex-1"
             >
-              <Pencil className="w-4 h-4" />
-              <span>Edit</span>
+              <Pencil className="w-4 h-4" aria-hidden="true" />
+              Edit
             </button>
-
-            {/* Delete Button */}
             <button
+              type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading || isDeleting}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-red-50 hover:bg-red-100 text-red-700 font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md active:scale-95"
+              aria-label={`Delete ${product.name}`}
+              className="icon-btn text-cherry-700 hover:bg-cherry-100"
             >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
+              <Trash2 className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         ) : (
-          <div className="space-y-2 animate-in fade-in">
-            <p className="text-xs sm:text-sm text-red-700 font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              Confirm delete?
+          <div className="mt-3 p-3 rounded-field bg-cherry-100 space-y-2.5 animate-fade-in" role="alert">
+            <p className="text-sm text-cherry-700 font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
+              Delete this product?
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 px-3 py-2 text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all disabled:opacity-50"
+                className="btn btn-secondary btn-sm flex-1"
               >
-                Cancel
+                Keep
               </button>
               <button
+                type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 px-3 py-2 text-xs sm:text-sm bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 active:scale-95"
+                className="btn btn-sm flex-1 bg-cherry-600 text-white hover:bg-cherry-700"
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Trash2 className="w-4 h-4" aria-hidden="true" />}
+                {isDeleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>

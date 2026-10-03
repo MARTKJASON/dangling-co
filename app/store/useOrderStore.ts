@@ -13,7 +13,7 @@ interface OrderStore {
   items: OrderItem[];
 
   // Actions
-  addItem: (product: Product, note?: string) => void;
+  addItem: (product: Product, note?: string, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   updateNote: (productId: string, note: string) => void;
@@ -30,20 +30,20 @@ export const useOrderStore = create<OrderStore>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product, note = '') => {
+      addItem: (product, note = '', quantity = 1) => {
         const existing = get().items.find((i) => i.product.id === product.id);
         if (existing) {
-          // Bump quantity if already in list
+          // Bump quantity if already in list; a new non-empty note replaces the old one
           set((s) => ({
             items: s.items.map((i) =>
               i.product.id === product.id
-                ? { ...i, quantity: i.quantity + 1 }
+                ? { ...i, quantity: i.quantity + quantity, note: note.trim() ? note : i.note }
                 : i,
             ),
           }));
         } else {
           set((s) => ({
-            items: [...s.items, { product, quantity: 1, note }],
+            items: [...s.items, { product, quantity, note }],
           }));
         }
       },

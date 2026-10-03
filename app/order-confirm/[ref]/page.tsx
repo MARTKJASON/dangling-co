@@ -1,15 +1,16 @@
 'use client';
 
 import React, { FC, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Copy, Check, MessageCircle, ArrowLeft, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { Copy, Check, MessageCircle, ArrowLeft, ExternalLink, ArrowRight } from 'lucide-react';
+import { FlowerMark } from '@/app/components/brand/Logo';
 
 const FACEBOOK_PAGE_URL = 'https://m.me/696684716864112';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ;
 
 const OrderConfirmPage: FC = () => {
   const params = useParams();
-  const router = useRouter();
   const ref = params.ref as string;
 
   const [copied, setCopied] = useState(false);
@@ -48,112 +49,99 @@ const OrderConfirmPage: FC = () => {
     window.open(FACEBOOK_PAGE_URL, '_blank');
   };
 
+  const steps = [
+    'Tap “Copy order details” above',
+    'Tap “Message us on Facebook” below',
+    'Paste your message and send it',
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] via-[#f5e4c0] to-[#f0d9b5] flex items-center justify-center px-4 py-12">
-
-      {/* Ambient blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-56 h-56 bg-purple-300 rounded-full opacity-20 blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-56 h-56 bg-pink-300 rounded-full opacity-15 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
-      <div className="relative w-full max-w-md space-y-5">
+    <div className="min-h-screen bg-cream-100 px-4 py-10 sm:py-14">
+      <div className="w-full max-w-xl mx-auto space-y-5 animate-fade-up">
 
         {/* Success header */}
-         <div className="text-center space-y-2">
-          <div className="text-5xl animate-bounce">🎀</div>
-          <h1 className="text-2xl font-extrabold text-gray-900">You're almost done!</h1>
-          <p className="text-gray-500 text-sm">
-            Copy your order ref below, then send it to us on Facebook to confirm.
+        <div className="text-center space-y-3">
+          <div className="flex justify-center">
+            <FlowerMark size={48} />
+          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-peri-50 text-peri-800 text-sm font-semibold tracking-wide">
+            Order {ref}
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink-900">
+            You&apos;re almost done!
+          </h1>
+          <p className="text-[15px] text-ink-600 max-w-md mx-auto">
+            Copy your order details below, then send them to us on Facebook Messenger to confirm.
           </p>
         </div>
 
         {/* Order ref card */}
-        <div className="bg-white rounded-3xl border-2 border-purple-100 shadow-xl p-6 space-y-4">
-
+        <div className="bg-white rounded-card border border-cream-300 shadow-rest p-5 sm:p-6 space-y-5">
           <div className="text-center space-y-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-purple-400">
-              Your Order Reference
-            </p>
-            <p className="text-4xl font-black tracking-widest bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-              {ref}
-            </p>
+            <p className="eyebrow">Your order reference</p>
+            <p className="font-display text-4xl font-semibold tracking-wide text-ink-900">{ref}</p>
           </div>
 
-          <div className="h-px bg-purple-100" />
-
           {/* Message preview */}
-          <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100">
-            <p className="text-xs font-bold uppercase tracking-widest text-purple-400 mb-2">
-              Message to send
-            </p>
-            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+          <div className="bg-cream-50 rounded-field border border-cream-200 p-4">
+            <p className="eyebrow mb-2">Message to send</p>
+            <pre className="text-[15px] text-ink-900 whitespace-pre-wrap break-words font-sans leading-relaxed">
               {messageText}
             </pre>
           </div>
 
-          {/* Copy button */}
           <button
+            type="button"
             onClick={handleCopy}
-            className={`w-full flex items-center justify-center gap-2 px-5 py-3.5 font-bold rounded-2xl transition-all duration-300 ${
-              copied
-                ? 'bg-green-500 text-white shadow-green-200 shadow-lg'
-                : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg hover:scale-[1.02]'
-            }`}
+            className={`btn btn-lg w-full ${copied ? 'btn-success' : 'btn-primary'}`}
+            aria-live="polite"
           >
             {copied ? (
-              <><Check className="w-5 h-5" /> Copied!</>
+              <><Check className="w-5 h-5" aria-hidden="true" /> Copied!</>
             ) : (
-              <><Copy className="w-5 h-5" /> Copy Order Details</>
+              <><Copy className="w-5 h-5" aria-hidden="true" /> Copy order details</>
             )}
           </button>
         </div>
 
         {/* Step instructions */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-amber-100 p-5 space-y-3">
-          <p className="text-xs font-bold uppercase tracking-widest text-amber-500">Next steps</p>
-          {[
-            { num: '1', text: 'Tap "Copy Order Details" above' },
-            { num: '2', text: 'Tap "Message Us on Facebook" below' },
-            { num: '3', text: 'Paste your message and send it' },
-          ].map((step) => (
-            <div key={step.num} className="flex items-start gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white text-xs font-black flex items-center justify-center">
-                {step.num}
-              </span>
-              <p className="text-sm text-gray-700 font-medium pt-0.5">{step.text}</p>
-            </div>
-          ))}
+        <div className="bg-white rounded-card border border-cream-300 p-5 sm:p-6 space-y-3">
+          <p className="eyebrow">Next steps</p>
+          <ol className="space-y-3">
+            {steps.map((text, i) => (
+              <li key={text} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-peri-50 text-peri-800 text-sm font-bold flex items-center justify-center">
+                  {i + 1}
+                </span>
+                <p className="text-[15px] text-ink-900 pt-0.5">{text}</p>
+              </li>
+            ))}
+          </ol>
         </div>
 
         {/* Open Messenger button */}
         <button
+          type="button"
           onClick={handleOpenMessenger}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#0866FF] hover:bg-[#0757E0] text-white font-bold rounded-2xl shadow-lg transition-all hover:scale-[1.02] active:scale-100 text-lg"
+          className="btn btn-messenger btn-lg w-full"
         >
-          <MessageCircle className="w-5 h-5" />
-          Message Us on Facebook
-          <ExternalLink className="w-4 h-4 opacity-70" />
+          <MessageCircle className="w-5 h-5" aria-hidden="true" />
+          Message us on Facebook
+          <ExternalLink className="w-4 h-4 opacity-80" aria-hidden="true" />
+          <span className="sr-only">(opens in a new tab)</span>
         </button>
 
-        {/* View order page link */}
-        <div className="text-center space-y-1">
-          <p className="text-xs text-gray-400">Want to review your order?</p>
-          <button
-            onClick={() => router.push(`/order/${ref}`)}
-            className="text-sm font-semibold text-purple-600 hover:text-purple-800 underline underline-offset-2 transition-colors"
-          >
-            View order details page →
-          </button>
+        {/* Secondary links */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 pt-1">
+          <Link href={`/order/${ref}`} className="btn btn-ghost btn-sm">
+            View order details
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+          </Link>
+          <Link href="/shop" className="btn btn-ghost btn-sm text-ink-600">
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            Back to shop
+          </Link>
         </div>
-
-        {/* Back to store */}
-        <button
-          onClick={() => router.push('/store')}
-          className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors py-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Store
-        </button>
       </div>
     </div>
   );

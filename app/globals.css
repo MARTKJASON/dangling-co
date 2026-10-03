@@ -1,26 +1,222 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Dangling Co. design tokens — "Daisy paper".
+ * Every color comes from the logo: periwinkle, butter, cream, sage (+ cherry for errors).
+ * Use these utilities (bg-cream-100, text-ink-600, bg-peri-600, …) instead of raw Tailwind palette colors.
+ */
+@theme {
+  --color-cream-50: #FFFDF7;
+  --color-cream-100: #FBF7EC;
+  --color-cream-200: #F3ECD8;
+  --color-cream-300: #E7DFC9;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-ink-900: #1F2340;
+  --color-ink-600: #4B5070;
+  --color-ink-500: #6A6F8A;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-peri-50: #EEF1FB;
+  --color-peri-100: #DDE3F7;
+  --color-peri-300: #A2B1EB;
+  --color-peri-500: #5B72CF;
+  --color-peri-600: #4A5CA8;
+  --color-peri-700: #384681;
+  --color-peri-800: #2D3970;
+  --color-peri-900: #26305A;
+
+  --color-butter-100: #FFF3D1;
+  --color-butter-400: #FFD372;
+  --color-butter-800: #6E4E00;
+
+  --color-sage-100: #E6EEE1;
+  --color-sage-400: #A8BFA0;
+  --color-sage-800: #2E5129;
+
+  --color-cherry-100: #FBE6E3;
+  --color-cherry-600: #C23A2E;
+  --color-cherry-700: #9A2C22;
+
+  --color-messenger: #0866FF;
+  --color-messenger-hover: #0757E0;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+
+  --radius-field: 12px;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+
+  --shadow-rest: 0 1px 2px rgb(31 35 64 / 0.08);
+  --shadow-raised: 0 8px 20px -8px rgb(31 35 64 / 0.22);
+  --shadow-overlay: 0 24px 48px -12px rgb(31 35 64 / 0.30);
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-fade-up: fade-up 240ms var(--ease-soft) both;
+  --animate-fade-in: fade-in 200ms var(--ease-soft) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-bump: bump 320ms var(--ease-soft);
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); }
+    100% { transform: scale(1); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-cream-100);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-peri-700);
+    outline-offset: 2px;
+  }
+
+  .font-display {
+    font-variation-settings: "SOFT" 100;
+  }
+
+  ::selection {
+    background: var(--color-butter-400);
+    color: var(--color-ink-900);
+  }
+}
+
+@layer components {
+  /* Buttons — one pill shape, several intents. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.375rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 200ms var(--ease-soft), color 200ms var(--ease-soft),
+      box-shadow 200ms var(--ease-soft), transform 120ms var(--ease-soft);
+  }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { background: var(--color-cream-300); color: var(--color-ink-500); box-shadow: none; cursor: not-allowed; }
+  .btn-sm { min-height: 40px; padding: 0 1rem; font-size: 14px; }
+  .btn-lg { min-height: 54px; padding: 0 1.75rem; font-size: 16px; }
+
+  .btn-primary { background: var(--color-peri-600); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--color-peri-700); }
+  .btn-secondary { background: #fff; color: var(--color-peri-800); box-shadow: inset 0 0 0 1.5px var(--color-peri-300); }
+  .btn-secondary:hover:not(:disabled) { background: var(--color-peri-50); }
+  .btn-ghost { background: transparent; color: var(--color-peri-700); }
+  .btn-ghost:hover:not(:disabled) { background: var(--color-peri-50); }
+  .btn-messenger { background: var(--color-messenger); color: #fff; }
+  .btn-messenger:hover:not(:disabled) { background: var(--color-messenger-hover); }
+  .btn-danger { background: transparent; color: var(--color-cherry-700); }
+  .btn-danger:hover:not(:disabled) { background: var(--color-cherry-100); }
+  .btn-success { background: var(--color-sage-800); color: #fff; }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    color: var(--color-ink-900);
+    cursor: pointer;
+    transition: background-color 200ms var(--ease-soft), transform 120ms var(--ease-soft);
+  }
+  .icon-btn:hover:not(:disabled) { background: var(--color-peri-50); }
+  .icon-btn:active:not(:disabled) { transform: scale(0.94); }
+  .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Chips — category filters. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    min-height: 40px;
+    padding: 0 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    background: #fff;
+    color: var(--color-ink-600);
+    box-shadow: inset 0 0 0 1px var(--color-cream-300);
+    cursor: pointer;
+    transition: background-color 200ms var(--ease-soft), color 200ms var(--ease-soft);
+  }
+  .chip:hover { background: var(--color-peri-50); color: var(--color-peri-800); }
+  .chip[aria-pressed="true"] { background: var(--color-ink-900); color: #fff; box-shadow: none; }
+
+  /* Form fields — 16px text so iOS never zooms on focus. */
+  .field {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 0.875rem;
+    border-radius: var(--radius-field);
+    border: 1.5px solid var(--color-cream-300);
+    background: #fff;
+    font-size: 16px;
+    color: var(--color-ink-900);
+    transition: border-color 200ms var(--ease-soft), box-shadow 200ms var(--ease-soft);
+  }
+  .field::placeholder { color: var(--color-ink-500); }
+  .field:hover { border-color: var(--color-peri-300); }
+  .field:focus { outline: none; border-color: var(--color-peri-600); box-shadow: 0 0 0 4px var(--color-peri-100); }
+  .field[aria-invalid="true"] { border-color: var(--color-cherry-600); }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-600);
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-cream-200) 0%, var(--color-cream-100) 50%, var(--color-cream-200) 100%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

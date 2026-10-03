@@ -1,93 +1,150 @@
 'use client';
 
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import CustomerFeedbackCarousel from '@/app/components/CustomerFeedback';
+import { Check, Heart, Loader2, MessageCircle, PenLine } from 'lucide-react';
+import CustomerFeedback from '@/app/components/CustomerFeedback';
+import ProductCard from '@/app/components/ProductCard';
+import { SiteHeader } from '@/app/components/layout/SiteHeader';
+import { SiteFooter } from '@/app/components/layout/SiteFooter';
+import { QuantityStepper } from '@/app/components/ui/QuantityStepper';
 import { getProductImages } from '@/app/types/product';
+import { getCategoryInfo, categorySlug } from '@/app/lib/categories';
+import { formatPeso } from '@/app/lib/format';
+import { MESSENGER_URL } from '@/app/lib/orderMessage';
+import { Product as BasketProduct } from '@/app/lib/products';
+import { useAddToBasket, AddPhase } from '@/app/hooks/useAddToBasket';
 
 import { useProductDetails } from './hooks/useProductDetails';
-import { ProductDetailsNav } from './components/ProductDetailsNav';
 import { ProductImagePanel } from './components/ProductImagePanel';
 import { DescriptionBlock } from './components/DescriptionBlock';
-import { WhyLoveIt } from './components/WhyLoveIt';
-import { ProductCTA } from './components/ProductCTA';
-import {
-  LoadingScreen,
-  ErrorScreen,
-  NotFoundScreen,
-} from './components/ProductDetailsStateScreens';
-import { AddToOrderButton } from './components/AddtoOrderButton';
-import { OrderListFAB } from '@/app/components/OrderListFAB';
+import { LoadingScreen, ErrorScreen, NotFoundScreen } from './components/ProductDetailsStateScreens';
+
+const AddButtonLabel: FC<{ phase: AddPhase }> = ({ phase }) => {
+  if (phase === 'adding') return <><Loader2 className="w-[18px] h-[18px] animate-spin" aria-hidden /> Adding…</>;
+  if (phase === 'added') return <><Check className="w-[18px] h-[18px]" strokeWidth={2.5} aria-hidden /> Added to basket</>;
+  return <>Add to basket</>;
+};
 
 const ProductDetailsPage: FC = () => {
   const params = useParams();
   const productId = params.id as string;
+  const { product, related, loading, error, notFound, retry } = useProductDetails(productId);
+  const { add, phase } = useAddToBasket();
+  const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState('');
 
-  const { product, color, emoji, loading, error, isMessageSent, handleMessageOrder } =
-    useProductDetails(productId);
+  if (error) return <ErrorScreen message={error} onRetry={retry} />;
+  if (notFound) return <NotFoundScreen />;
+  if (loading || !product) return <LoadingScreen />;
 
-  if (loading) return <LoadingScreen />;
-  if (error) return <ErrorScreen message={error} />;
-  if (!product) return <NotFoundScreen />;
+  const category = getCategoryInfo(product.category);
+  const handleAdd = () => {
+    add({ ...product, image: product.image_url } as BasketProduct, note, quantity);
+    setNote('');
+    setQuantity(1);
+  };
+  const addClass = `btn btn-lg flex-1 ${phase === 'added' ? 'btn-success' : 'btn-primary'}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#faf7e5] via-[#f5e4c0] to-[#f0d9b5]">
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader active="shop" />
 
-      {/* Ambient blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-56 h-56 bg-purple-300 rounded-full opacity-20 blur-3xl animate-pulse" />
-        <div className="absolute bottom-40 right-10 w-64 h-64 bg-pink-300 rounded-full opacity-15 blur-3xl animate-pulse" style={{ animationDelay: '1.2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-96 h-32 bg-amber-200 rounded-full opacity-10 blur-3xl" />
-      </div>
+      <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-8 pt-0 md:pt-6 pb-32 md:pb-24 flex flex-col gap-16 md:gap-20">
+        <div className="flex flex-col gap-5 md:gap-6">
+          <nav aria-label="Breadcrumb" className="hidden md:block text-sm text-ink-600">
+            <ol className="flex flex-wrap items-center gap-2">
+              <li><Link href="/shop" className="py-1.5 hover:text-ink-900">Shop</Link></li>
+              {category && (
+                <>
+                  <li aria-hidden>/</li>
+                  <li><Link href={`/shop?category=${categorySlug(category.id)}`} className="py-1.5 hover:text-ink-900">{category.label}</Link></li>
+                </>
+              )}
+              <li aria-hidden>/</li>
+              <li aria-current="page" className="text-ink-900 font-medium">{product.name}</li>
+            </ol>
+          </nav>
 
-      <ProductDetailsNav category={product.category} emoji={emoji} color={color} />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-20">
-
-          {/* Left — image */}
-          <ProductImagePanel
-            imageUrls={getProductImages(product)}
-            name={product.name}
-            price={product.price}
-            color={color}
-          />
-
-          {/* Right — details */}
-          <div className="flex flex-col gap-7">
-            <AddToOrderButton product={product} />
-            {/* Category tag */}
-            <div className={`inline-flex items-center gap-2 self-start px-4 py-2 rounded-full ${color.bg} ${color.text} border ${color.border} font-semibold text-sm`}>
-              <span className="text-lg">{emoji}</span>
-              {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-14 items-start">
+            <div className="w-full md:flex-[1_1_520px] min-w-0">
+              <ProductImagePanel key={product.id} imageUrls={getProductImages(product)} name={product.name} />
             </div>
 
-            {/* Title */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 bg-clip-text text-transparent leading-tight">
-              {product.name}
-            </h1>
+            <div className="w-full md:flex-[1_1_400px] min-w-0 flex flex-col gap-5 md:gap-6 md:sticky md:top-[100px]">
+              <div className="flex flex-col gap-2 md:gap-2.5">
+                {category && <span className="eyebrow">{category.label}</span>}
+                <h1 className="font-display text-[30px] md:text-[44px] leading-[1.08] font-semibold tracking-[-0.015em]">{product.name}</h1>
+                <span className="text-[22px] md:text-[26px] font-bold tabular-nums">{formatPeso(product.price)}</span>
+              </div>
 
-            <DescriptionBlock text={product.description} color={color} />
+              <DescriptionBlock text={product.description} />
 
-            {/* Price box */}
-            <div className="px-6 py-5 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Price</p>
-              <p className="text-5xl font-black bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                ₱{product.price}
-              </p>
+              <div className="flex items-start gap-3 px-4 py-3.5 rounded-2xl bg-butter-100 text-[15px]">
+                <Heart className="w-5 h-5 mt-0.5 shrink-0 text-butter-800" aria-hidden />
+                <span><b>Made to order, by hand.</b> Delivered in 2–5 business days depending on location.</span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="maker-note" className="text-sm font-semibold">
+                  Note for the maker <span className="font-normal text-ink-600">(optional)</span>
+                </label>
+                <textarea
+                  id="maker-note"
+                  rows={2}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Colors, letters, size…"
+                  className="field resize-y"
+                />
+              </div>
+
+              {/* Desktop add row; on phones the same controls live in the bottom bar. */}
+              <div className="hidden md:flex gap-3 items-center">
+                <QuantityStepper value={quantity} onChange={setQuantity} label={product.name} />
+                <button type="button" onClick={handleAdd} disabled={phase === 'adding'} className={addClass} aria-live="polite">
+                  <AddButtonLabel phase={phase} />
+                </button>
+              </div>
+
+              <a href={MESSENGER_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost !min-h-11 !px-3 -ml-3 self-start">
+                <MessageCircle className="w-[18px] h-[18px]" aria-hidden /> Questions? Message us first
+              </a>
+
+              <ul className="grid grid-cols-3 gap-3 pt-5 border-t border-cream-300 text-sm text-ink-600">
+                <li className="flex flex-col gap-1.5"><Heart className="w-5 h-5 text-peri-600" aria-hidden /><b className="text-ink-900">Handmade</b>Strung one bead at a time</li>
+                <li className="flex flex-col gap-1.5"><PenLine className="w-5 h-5 text-peri-600" aria-hidden /><b className="text-ink-900">Customizable</b>Tell us in the note</li>
+                <li className="flex flex-col gap-1.5"><MessageCircle className="w-5 h-5 text-peri-600" aria-hidden /><b className="text-ink-900">Confirmed on chat</b>We check details with you</li>
+              </ul>
             </div>
-
-            <WhyLoveIt color={color} />
-
           </div>
         </div>
-        <OrderListFAB />
-        {/* Customer feedback */}
-        <div className="mt-24 pt-16 border-t-2 border-amber-200/60">
-          <CustomerFeedbackCarousel />
-        </div>
-      </div>
 
+        {related.length > 0 && (
+          <section className="flex flex-col gap-6">
+            <h2 className="font-display text-2xl md:text-[32px] leading-tight font-semibold">You might also like</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-5 sm:gap-5">
+              {related.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
+
+        <section className="flex flex-col gap-6">
+          <h2 className="font-display text-2xl md:text-[32px] leading-tight font-semibold">What customers say</h2>
+          <CustomerFeedback />
+        </section>
+      </main>
+
+      <SiteFooter />
+
+      {/* Phone action bar */}
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-20 bg-white border-t border-cream-300 shadow-[0_-8px_20px_-8px_rgb(31_35_64/0.18)] px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] flex gap-2.5 items-center">
+        <QuantityStepper value={quantity} onChange={setQuantity} label={product.name} />
+        <button type="button" onClick={handleAdd} disabled={phase === 'adding'} className={addClass}>
+          <AddButtonLabel phase={phase} />
+        </button>
+      </div>
     </div>
   );
 };

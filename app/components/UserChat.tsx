@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Send, Loader } from 'lucide-react';
+import { Send, Loader2, AlertCircle, Check } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -75,7 +75,7 @@ export default function UserChat({ token }: { token?: string | null }) {
       const data = await response.json();
       if (data.success) {
         setReplyMessage('');
-        setSuccessMessage('✅ Message sent!');
+        setSuccessMessage('Message sent');
         const updatedResponse = await fetch(`/api/getConversation?token=${token}`);
         const updatedData = await updatedResponse.json();
         setConversation(updatedData.data);
@@ -89,91 +89,117 @@ export default function UserChat({ token }: { token?: string | null }) {
     }
   };
 
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-700">⏳ Loading conversation...</p>
+      <div className="min-h-screen bg-cream-100 flex justify-center items-center px-4" role="status">
+        <div className="flex items-center gap-3 text-ink-600">
+          <Loader2 className="w-5 h-5 animate-spin text-peri-600" aria-hidden="true" />
+          <p className="text-[15px]">Loading conversation…</p>
+        </div>
       </div>
     );
   }
 
   if (error || !conversation) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500">{error || 'Conversation not found.'}</p>
+      <div className="min-h-screen bg-cream-100 flex justify-center items-center px-4">
+        <div role="alert" className="flex items-center gap-3 px-4 py-3 bg-cherry-100 text-cherry-700 rounded-field">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+          <p className="text-[15px]">{error || 'Conversation not found.'}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4">
-      {/* Header */}
-      <div className="w-full max-w-3xl bg-amber-400 text-white rounded-t-xl p-6 shadow-md">
-        <h1 className="text-2xl font-bold">{conversation.productName}</h1>
-        <p className="text-lg font-semibold">{conversation.productPrice}</p>
-      </div>
-
-      {/* Conversation Area */}
-      <div className="w-full max-w-3xl flex-1 bg-white rounded-b-xl shadow-md p-6 mt-2 flex flex-col">
-        {/* Original Message */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
-          <p className="text-xs text-blue-700 font-bold mb-1">Your Message</p>
-          <p className="text-gray-800">{conversation.userMessage}</p>
-          <p className="text-xs text-gray-500 mt-2">{new Date(conversation.createdAt).toLocaleString()}</p>
+    <div className="min-h-screen bg-cream-100 flex flex-col items-center px-4 py-6 sm:py-10">
+      <div className="w-full max-w-2xl flex-1 flex flex-col bg-white rounded-card border border-cream-300 shadow-rest overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-4 px-5 py-4 border-b border-cream-200">
+          {conversation.productImage && (
+            <img
+              src={conversation.productImage}
+              alt=""
+              className="w-14 h-14 rounded-field object-cover bg-cream-200 flex-shrink-0"
+            />
+          )}
+          <div className="min-w-0">
+            <h1 className="font-display text-xl font-semibold text-ink-900 line-clamp-1">{conversation.productName}</h1>
+            <p className="text-[15px] font-bold text-ink-900 tabular-nums">{conversation.productPrice}</p>
+          </div>
         </div>
 
-        {/* Replies */}
-        <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+        {/* Conversation */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 space-y-3 bg-cream-50" aria-live="polite">
+          {/* Original message */}
+          <div className="flex flex-col items-end">
+            <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-br-md bg-peri-600 text-white">
+              <p className="text-[15px] whitespace-pre-wrap break-words">{conversation.userMessage}</p>
+            </div>
+            <p className="text-xs text-ink-600 mt-1">
+              You · {new Date(conversation.createdAt).toLocaleString()}
+            </p>
+          </div>
+
           {conversation.messages.length > 0 ? (
-            conversation.messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`p-3 rounded-lg border-2 ${
-                  msg.sender === 'admin'
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-blue-50 border-blue-200'
-                }`}
-              >
-                <p className={`text-xs font-bold mb-1 ${msg.sender === 'admin' ? 'text-green-700' : 'text-blue-700'}`}>
-                  {msg.sender === 'admin' ? '💬 Reply From Us' : '💬 Your Reply'}
-                </p>
-                <p className="text-gray-800">{msg.text}</p>
-                <p className="text-xs text-gray-500 mt-1">{new Date(msg.timestamp).toLocaleString()}</p>
-              </div>
-            ))
+            conversation.messages.map((msg) => {
+              const fromShop = msg.sender === 'admin';
+              return (
+                <div key={msg.id} className={`flex flex-col ${fromShop ? 'items-start' : 'items-end'}`}>
+                  <div
+                    className={`max-w-[85%] px-4 py-3 rounded-2xl ${
+                      fromShop
+                        ? 'rounded-bl-md bg-white border border-cream-300 text-ink-900'
+                        : 'rounded-br-md bg-peri-600 text-white'
+                    }`}
+                  >
+                    <p className="text-[15px] whitespace-pre-wrap break-words">{msg.text}</p>
+                  </div>
+                  <p className="text-xs text-ink-600 mt-1">
+                    {fromShop ? 'Dangling Co.' : 'You'} · {new Date(msg.timestamp).toLocaleString()}
+                  </p>
+                </div>
+              );
+            })
           ) : (
-            <p className="text-center text-gray-500 py-6">⏳ Waiting for reply...</p>
+            <p className="text-center text-sm text-ink-600 py-6">Waiting for a reply from the shop…</p>
           )}
         </div>
 
-        {/* Reply Input */}
-        <div className="flex flex-col gap-2">
-          {successMessage && <p className="text-green-600 text-center">{successMessage}</p>}
-          <textarea
-            rows={3}
-            value={replyMessage}
-            onChange={(e) => setReplyMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="w-full border-2 border-gray-300 rounded-lg p-3 resize-none focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-300"
-          />
-          <button
-            onClick={sendReply}
-            disabled={isSending || !replyMessage.trim()}
-            className={`w-full py-2 px-4 rounded-lg text-white font-bold ${
-              isSending || !replyMessage.trim()
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-amber-400 hover:bg-amber-500'
-            }`}
-          >
-            {isSending ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="w-4 h-4 animate-spin" />
-                Sending...
-              </span>
-            ) : (
-              'Send'
-            )}
-          </button>
+        {/* Reply input */}
+        <div className="border-t border-cream-200 px-4 sm:px-5 py-4 space-y-2">
+          {successMessage && (
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-sage-800" role="status">
+              <Check className="w-4 h-4" aria-hidden="true" />
+              {successMessage}
+            </p>
+          )}
+          <div className="flex items-end gap-2">
+            <label htmlFor="chat-reply" className="sr-only">Your message</label>
+            <textarea
+              id="chat-reply"
+              rows={2}
+              value={replyMessage}
+              onChange={(e) => setReplyMessage(e.target.value)}
+              placeholder="Type your message…"
+              className="field resize-none flex-1"
+            />
+            <button
+              type="button"
+              onClick={sendReply}
+              disabled={isSending || !replyMessage.trim()}
+              className="btn btn-primary"
+            >
+              {isSending ? (
+                <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Send className="w-5 h-5" aria-hidden="true" />
+              )}
+              <span className="hidden sm:inline">{isSending ? 'Sending…' : 'Send'}</span>
+              <span className="sr-only sm:hidden">{isSending ? 'Sending' : 'Send'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

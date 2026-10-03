@@ -1,59 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useProducts } from '@/app/hooks/useProducts';
-import { categoryColors, categoryEmojis, CategoryColor } from '../categoryConfig';
+import { Product } from '@/app/types/product';
 
 interface UseProductDetailsReturn {
-  product: any | null;
-  color: CategoryColor;
-  emoji: string;
+  product: Product | null;
+  /** Up to four other products, same category first. */
+  related: Product[];
   loading: boolean;
   error: string | null;
-  isMessageSent: boolean;
-  handleMessageOrder: () => void;
+  /** True once products have loaded and this id wasn't among them. */
+  notFound: boolean;
+  retry: () => void;
 }
 
 export const useProductDetails = (productId: string): UseProductDetailsReturn => {
-  const [product, setProduct] = useState<any>(null);
-  const [color, setColor] = useState<CategoryColor>(categoryColors.necklace);
-  const [emoji, setEmoji] = useState('✨');
-  const [isMessageSent, setIsMessageSent] = useState(false);
-
   const { products, loading, error, loadProducts } = useProducts();
-
-  useEffect(() => { loadProducts(); }, [loadProducts]);
+  const [settled, setSettled] = useState(products.length > 0);
 
   useEffect(() => {
-    if (products.length > 0) {
-      const found = products.find((p) => p.id === productId);
-      if (found) {
-        setProduct(found);
-        setColor(categoryColors[found.category] || categoryColors.necklace);
-        setEmoji(categoryEmojis[found.category] || '✨');
-      }
-    }
-  }, [products, productId]);
+    loadProducts().finally(() => setSettled(true));
+  }, [loadProducts]);
 
-  const handleMessageOrder = () => {
-    if (!product) return;
+  const product = useMemo(() => products.find((p) => p.id === productId) ?? null, [products, productId]);
 
-    const msg = `Hi! I'm interested in ordering the "${product.name}" (₱${product.price}).\n\n📸 Image: ${product.image_url}\n\nCould you please provide more details about customization options and delivery time? Thank you!`;
-    const encoded = encodeURIComponent(msg);
-    const appLink = `https://m.me/696684716864112?text=${encoded}`;
-    const webLink = 'https://m.me/696684716864112';
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const related = useMemo(() => {
+    if (!product) return [];
+    const others = products.filter((p) => p.id !== product.id);
+    const same = others.filter((p) => p.category === product.category);
+    const rest = others.filter((p) => p.category !== product.category);
+    return [...same, ...rest].slice(0, 4);
+  }, [products, product]);
 
-    if (isMobile) {
-      window.location.href = appLink;
-      setTimeout(() => window.open(webLink, '_blank'), 500);
-    } else {
-      window.open(webLink, '_blank');
-    }
-
-    setIsMessageSent(true);
-    setTimeout(() => setIsMessageSent(false), 2000);
+  return {
+    product,
+    related,
+    loading: loading || !settled,
+    error,
+    notFound: settled && !loading && !error && !product,
+    retry: () => loadProducts(true),
   };
-
-  return { product, color, emoji, loading, error, isMessageSent, handleMessageOrder };
 };
